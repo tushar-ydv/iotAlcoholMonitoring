@@ -1,0 +1,79 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 //Include the library files\
+#include <LiquidCrystal_I2C.h>\
+#define BLYNK_PRINT Serial\
+#include <ESP8266WiFi.h>\
+#include <BlynkSimpleEsp8266.h>\
+#include <DHT.h>\
+\
+//Initialize the LCD display\
+LiquidCrystal_I2C lcd(0x27, 16, 2);\
+\
+char auth[] = "A8u9-vNVnJOhKoyJ1RQMB3UUdJ-0bloB";//Enter your Auth token\
+char ssid[] = \'93tusharyadav\'94;//Enter your WIFI name\
+char pass[] = \'93iphone13@12345";//Enter your WIFI password\
+\
+DHT dht(D3, DHT22); //(sensor pin,sensor type)\
+BlynkTimer timer;\
+bool pirbutton = 0;\
+\
+// Define component pins\
+#define Buzzer D0\
+#define MQ2 A0\
+\
+void setup() \{\
+  Serial.begin(9600);\
+  lcd.begin();\
+  lcd.backlight();\
+  pinMode(Buzzer, OUTPUT);\
+ \
+  Blynk.begin(auth, ssid, pass, "blynk.cloud", 80);\
+  dht.begin();\
+\
+  lcd.setCursor(0, 0);\
+  lcd.print("Welcome To ");\
+  lcd.setCursor(4, 1);\
+  lcd.print("Our Projects");\
+  delay(4000);\
+  lcd.clear();\
+\
+//Call the functions\
+  timer.setInterval(100L, gassensor);\
+\
+\}\
+\
+//Get the MQ2 sensor values\
+void gassensor() \{\
+  int value = analogRead(MQ2);\
+  Serial.println(value);\
+  value = map(value, 0, 1024, 0, 100);\
+  if (value <= 35) \{\
+    digitalWrite(Buzzer, LOW);\
+     lcd.setCursor(2, 1);\
+  lcd.print(" Normal.!");\
+  \} else if (value > 40) \{\
+    lcd.setCursor(2, 1);\
+  lcd.print(" Warning!");\
+    Blynk.notify("Warning! detected");\
+    digitalWrite(Buzzer, HIGH);\
+    Blynk.email("test@gmail.com", "Alert", "Alcohol  Detected!");\
+    Blynk.logEvent("Alcohol_alert","Alcohol Detected");\
+  \}\
+  Blynk.virtualWrite(V1, value);\
+  lcd.setCursor(0, 0);\
+  lcd.print("Alco. Level:");\
+  lcd.print(" ");\
+  lcd.print(value);\
+\
+\}\
+\
+void loop() \{\
+  Blynk.run();//Run the Blynk library\
+  timer.run();//Run the Blynk timer\
+\}}
